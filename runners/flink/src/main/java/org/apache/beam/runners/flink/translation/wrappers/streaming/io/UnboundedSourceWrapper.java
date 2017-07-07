@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import org.apache.beam.runners.flink.metrics.FlinkMetricContainer;
+import org.apache.beam.runners.flink.metrics.FlinkMetricsContainerMap;
 import org.apache.beam.runners.flink.metrics.ReaderInvocationUtil;
 import org.apache.beam.runners.flink.translation.types.CoderTypeInformation;
 import org.apache.beam.runners.flink.translation.utils.SerializedPipelineOptions;
@@ -213,10 +213,8 @@ public class UnboundedSourceWrapper<
 
   @Override
   public void run(SourceContext<WindowedValue<ValueWithRecordId<OutputT>>> ctx) throws Exception {
-
     context = ctx;
-
-    FlinkMetricContainer metricContainer = new FlinkMetricContainer(getRuntimeContext());
+    FlinkMetricsContainerMap metricContainer = FlinkMetricsContainerMap.getInstance(getRuntimeContext());
 
     ReaderInvocationUtil<OutputT, UnboundedSource.UnboundedReader<OutputT>> readerInvoker =
         new ReaderInvocationUtil<>(

@@ -127,4 +127,13 @@ public interface FlinkPipelineOptions
   @Default.Boolean(false)
   Boolean getRetainExternalizedCheckpointsOnCancellation();
   void setRetainExternalizedCheckpointsOnCancellation(Boolean retainOnCancellation);
+
+  @Description("Set Flink checkpoint path.")
+  String getCheckpointPath();
+  void setCheckpointPath(String checkpointPath);
+
+  @Description("Enables or disables metrics accumulator")
+  @Default.Boolean(false)
+  Boolean getEnableMetricsAccumulator();
+  void setEnableMetricsAccumulator(Boolean enableMetricsAccumulator);
 }

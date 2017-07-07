@@ -17,15 +17,15 @@
  */
 package org.apache.beam.runners.flink;
 
-import static org.apache.beam.runners.core.metrics.MetricsContainerStepMap.asAttemptedOnlyMetricResults;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
-import org.apache.beam.runners.flink.metrics.FlinkMetricContainer;
+import org.apache.beam.runners.core.metrics.MetricsContainerDataMap;
+import org.apache.beam.runners.flink.metrics.FlinkMetricsContainerMap;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.metrics.MetricResults;
+import org.apache.beam.sdk.metrics.MetricsFilter;
 import org.joda.time.Duration;
 
 /**
@@ -75,7 +75,16 @@ public class FlinkRunnerResult implements PipelineResult {
 
   @Override
   public MetricResults metrics() {
-    return asAttemptedOnlyMetricResults(
-        (MetricsContainerStepMap) accumulators.get(FlinkMetricContainer.ACCUMULATOR_NAME));
+    return new MetricResults() {
+      @Override
+      public MetricQueryResults queryMetrics(MetricsFilter filter) {
+        MetricsContainerDataMap containerDataMap =
+                (MetricsContainerDataMap) accumulators.get(FlinkMetricsContainerMap.ACCUMULATOR_NAME);
+        if (containerDataMap != null) {
+          return containerDataMap.queryMetrics(filter);
+        }
+        return null;
+      }
+    };
   }
 }

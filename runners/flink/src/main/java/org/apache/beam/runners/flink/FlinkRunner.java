@@ -29,9 +29,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import org.apache.beam.runners.flink.metrics.FlinkBeamMetric;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
 import org.apache.beam.sdk.PipelineRunner;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
+import org.apache.beam.sdk.metrics.MetricResult;
+import org.apache.beam.sdk.metrics.MetricResults;
 import org.apache.beam.sdk.metrics.MetricsEnvironment;
 import org.apache.beam.sdk.options.PipelineOptions;
 import org.apache.beam.sdk.options.PipelineOptionsValidator;
@@ -104,6 +108,7 @@ public class FlinkRunner extends PipelineRunner<PipelineResult> {
     logWarningIfPCollectionViewHasNonDeterministicKeyCoder(pipeline);
 
     MetricsEnvironment.setMetricsSupported(true);
+    FlinkBeamMetric.setEnableMetricsAccumulator(options.getEnableMetricsAccumulator());
 
     LOG.info("Executing pipeline using FlinkRunner.");
 
@@ -134,7 +139,14 @@ public class FlinkRunner extends PipelineRunner<PipelineResult> {
         }
       }
 
-      return new FlinkRunnerResult(accumulators, result.getNetRuntime());
+      FlinkRunnerResult runnerResult = new FlinkRunnerResult(accumulators, result.getNetRuntime());
+      MetricResults metricResults= runnerResult.metrics();
+      MetricQueryResults metricQueryResults = metricResults.queryMetrics(null);
+      for(MetricResult<Long> counterResult: metricQueryResults.counters()){
+        System.out.println(String.format("step:%s, metric:%s, value:%d",
+                counterResult.step(), counterResult.name().name(), counterResult.attempted()));
+      }
+      return runnerResult;
     }
   }
 

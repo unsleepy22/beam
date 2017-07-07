@@ -18,8 +18,6 @@
 
 package org.apache.beam.runners.spark;
 
-import static org.apache.beam.runners.core.metrics.MetricsContainerStepMap.asAttemptedOnlyMetricResults;
-
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -30,7 +28,9 @@ import org.apache.beam.runners.spark.metrics.MetricsAccumulator;
 import org.apache.beam.runners.spark.translation.SparkContextFactory;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.PipelineResult;
+import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.metrics.MetricResults;
+import org.apache.beam.sdk.metrics.MetricsFilter;
 import org.apache.beam.sdk.util.UserCodeException;
 import org.apache.spark.SparkException;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -107,8 +107,12 @@ public abstract class SparkPipelineResult implements PipelineResult {
 
   @Override
   public MetricResults metrics() {
-    return asAttemptedOnlyMetricResults(
-        MetricsAccumulator.getInstance().value());
+    return new MetricResults() {
+      @Override
+      public MetricQueryResults queryMetrics(MetricsFilter filter) {
+        return MetricsAccumulator.getInstance().value().queryMetrics(filter);
+      }
+    };
   }
 
   @Override

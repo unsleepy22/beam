@@ -27,11 +27,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
 import org.apache.beam.runners.spark.coders.CoderHelpers;
 import org.apache.beam.runners.spark.io.EmptyCheckpointMark;
 import org.apache.beam.runners.spark.io.MicrobatchSource;
 import org.apache.beam.runners.spark.io.SparkUnboundedSource.Metadata;
+import org.apache.beam.runners.spark.metrics.SparkMetricsContainerStepMap;
 import org.apache.beam.runners.spark.translation.SparkRuntimeContext;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.io.Source;
@@ -110,8 +110,8 @@ public class StateSpecFunctions {
           scala.Option<CheckpointMarkT> startCheckpointMark,
           State<Tuple2<byte[], Instant>> state) {
 
-        MetricsContainerStepMap metricsContainers = new MetricsContainerStepMap();
-        MetricsContainer metricsContainer = metricsContainers.getContainer(stepName);
+        SparkMetricsContainerStepMap metricsContainers = SparkMetricsContainerStepMap.getInstance();
+        MetricsContainer metricsContainer = metricsContainers.getMetricsContainer(stepName);
 
         // Add metrics container to the scope of org.apache.beam.sdk.io.Source.Reader methods
         // since they may report metrics.

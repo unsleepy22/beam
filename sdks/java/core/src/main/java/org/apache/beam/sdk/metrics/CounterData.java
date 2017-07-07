@@ -16,35 +16,27 @@
  * limitations under the License.
  */
 
-package org.apache.beam.runners.spark.metrics;
-
-import org.apache.beam.runners.core.metrics.MetricsContainerDataMap;
-import org.apache.spark.AccumulatorParam;
-
+package org.apache.beam.sdk.metrics;
 
 /**
- * Metrics accumulator param.
+ * snapshot data of a counter.
  */
-class MetricsAccumulatorParam implements AccumulatorParam<MetricsContainerDataMap> {
+public class CounterData implements MetricData<CounterData> {
     private static final long serialVersionUID = 1L;
 
-    @Override
-    public MetricsContainerDataMap addAccumulator(
-            MetricsContainerDataMap c1,
-            MetricsContainerDataMap c2) {
-        return addInPlace(c1, c2);
+    private long value;
+
+    public long getValue() {
+        return value;
+    }
+
+    public CounterData setValue(long value) {
+        this.value = value;
+        return this;
     }
 
     @Override
-    public MetricsContainerDataMap addInPlace(
-            MetricsContainerDataMap c1,
-            MetricsContainerDataMap c2) {
-        c1.updateAll(c2);
-        return c1;
-    }
-
-    @Override
-    public MetricsContainerDataMap zero(MetricsContainerDataMap initialValue) {
-        return new MetricsContainerDataMap();
+    public void merge(CounterData other) {
+        this.value = value + other.value;
     }
 }

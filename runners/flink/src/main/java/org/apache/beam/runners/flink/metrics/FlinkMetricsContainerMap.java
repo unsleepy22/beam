@@ -17,9 +17,13 @@
  */
 package org.apache.beam.runners.flink.metrics;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.beam.runners.core.metrics.MetricsContainerData;
 import org.apache.beam.runners.core.metrics.MetricsContainerDataMap;
 import org.apache.beam.runners.core.metrics.MetricsContainerImpl;
+import org.apache.beam.sdk.metrics.MetricData;
+import org.apache.beam.sdk.metrics.MetricName;
 import org.apache.beam.sdk.metrics.MetricsContainer;
 import org.apache.flink.api.common.accumulators.Accumulator;
 import org.apache.flink.api.common.functions.RuntimeContext;
@@ -30,31 +34,45 @@ import org.slf4j.LoggerFactory;
  * Helper class for holding a {@link MetricsContainerImpl} and forwarding Beam metrics to
  * Flink accumulators and metrics.
  */
-public class FlinkMetricContainer {
+public class FlinkMetricsContainerMap {
 
     public static final String ACCUMULATOR_NAME = "__metricscontainers";
 
-    private static final Logger LOG = LoggerFactory.getLogger(FlinkMetricContainer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FlinkMetricsContainerMap.class);
 
     private final RuntimeContext runtimeContext;
     private final MetricsAccumulator metricsAccumulator;
     private final ConcurrentHashMap<String, FlinkMetricsContainerImpl> metricsContainerStepMap;
 
-    public FlinkMetricContainer(RuntimeContext runtimeContext) {
+    //private static FlinkMetricsContainerMap instance;
+
+    private FlinkMetricsContainerMap(RuntimeContext runtimeContext) {
         this.runtimeContext = runtimeContext;
 
-        Accumulator<MetricsContainerDataMap, MetricsContainerDataMap> metricsAccumulator =
-                runtimeContext.getAccumulator(ACCUMULATOR_NAME);
-        if (metricsAccumulator == null) {
-            metricsAccumulator = new MetricsAccumulator();
-            try {
-                runtimeContext.addAccumulator(ACCUMULATOR_NAME, metricsAccumulator);
-            } catch (Exception e) {
-                LOG.error("Failed to create metrics accumulator.", e);
+        if (FlinkBeamMetric.isEnableMetricsAccumulator()) {
+            Accumulator<MetricsContainerDataMap, MetricsContainerDataMap> metricsAccumulator =
+                    runtimeContext.getAccumulator(ACCUMULATOR_NAME);
+            if (metricsAccumulator == null) {
+                metricsAccumulator = new MetricsAccumulator();
+                try {
+                    runtimeContext.addAccumulator(ACCUMULATOR_NAME, metricsAccumulator);
+                } catch (Exception e) {
+                    LOG.error("Failed to create metrics accumulator.", e);
+                }
             }
+            this.metricsAccumulator = (MetricsAccumulator) metricsAccumulator;
+        } else {
+            this.metricsAccumulator = null;
         }
-        this.metricsAccumulator = (MetricsAccumulator) metricsAccumulator;
         this.metricsContainerStepMap = new ConcurrentHashMap<>();
+    }
+
+    public static FlinkMetricsContainerMap getInstance(RuntimeContext runtimeContext) {
+//        if (instance == null) {
+//            instance = new FlinkMetricsContainerMap(runtimeContext);
+//        }
+//        return instance;
+        return new FlinkMetricsContainerMap(runtimeContext);
     }
 
     public MetricsContainer getMetricsContainer(String stepName) {
@@ -66,9 +84,17 @@ public class FlinkMetricContainer {
     }
 
     void updateMetrics() {
-//    MetricResults metricResults =
-//        asAttemptedOnlyMetricResults(metricsAccumulator.getLocalValue());
-//    MetricQueryResults metricQueryResults =
-//        metricResults.queryMetrics(MetricsFilter.builder().build());
+        if (FlinkBeamMetric.isEnableMetricsAccumulator()) {
+            MetricsContainerDataMap metricsContainerDataMap = new MetricsContainerDataMap();
+
+            for (Map.Entry<String, FlinkMetricsContainerImpl> entry : metricsContainerStepMap.entrySet()) {
+                String stepName = entry.getKey();
+                Map<MetricName, MetricData> updates = entry.getValue().getUpdates();
+                metricsContainerDataMap.getContainer(stepName).update(
+                        new MetricsContainerData(stepName, updates));
+            }
+
+            this.metricsAccumulator.add(metricsContainerDataMap);
+        }
     }
 }

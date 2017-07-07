@@ -34,10 +34,10 @@ import org.apache.beam.runners.core.InMemoryTimerInternals;
 import org.apache.beam.runners.core.StateInternals;
 import org.apache.beam.runners.core.StepContext;
 import org.apache.beam.runners.core.TimerInternals;
-import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
 import org.apache.beam.runners.spark.aggregators.NamedAggregators;
 import org.apache.beam.runners.spark.util.SideInputBroadcast;
 import org.apache.beam.runners.spark.util.SparkSideInputReader;
+import org.apache.beam.sdk.metrics.MetricsContainer;
 import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.windowing.BoundedWindow;
 import org.apache.beam.sdk.util.WindowedValue;
@@ -60,7 +60,7 @@ public class MultiDoFnFunction<InputT, OutputT>
     implements PairFlatMapFunction<Iterator<WindowedValue<InputT>>, TupleTag<?>, WindowedValue<?>> {
 
   private final Accumulator<NamedAggregators> aggAccum;
-  private final Accumulator<MetricsContainerStepMap> metricsAccum;
+  private final MetricsContainer metricsContainer;
   private final String stepName;
   private final DoFn<InputT, OutputT> doFn;
   private final SparkRuntimeContext runtimeContext;
@@ -72,7 +72,7 @@ public class MultiDoFnFunction<InputT, OutputT>
 
   /**
    * @param aggAccum       The Spark {@link Accumulator} that backs the Beam Aggregators.
-   * @param metricsAccum       The Spark {@link Accumulator} that backs the Beam metrics.
+   * @param metricsContainer       The Spark {@link MetricsContainer} that backs the Beam metrics.
    * @param doFn              The {@link DoFn} to be wrapped.
    * @param runtimeContext    The {@link SparkRuntimeContext}.
    * @param mainOutputTag     The main output {@link TupleTag}.
@@ -83,7 +83,7 @@ public class MultiDoFnFunction<InputT, OutputT>
    */
   public MultiDoFnFunction(
       Accumulator<NamedAggregators> aggAccum,
-      Accumulator<MetricsContainerStepMap> metricsAccum,
+      MetricsContainer metricsContainer,
       String stepName,
       DoFn<InputT, OutputT> doFn,
       SparkRuntimeContext runtimeContext,
@@ -93,7 +93,7 @@ public class MultiDoFnFunction<InputT, OutputT>
       WindowingStrategy<?, ?> windowingStrategy,
       boolean stateful) {
     this.aggAccum = aggAccum;
-    this.metricsAccum = metricsAccum;
+    this.metricsContainer = metricsContainer;
     this.stepName = stepName;
     this.doFn = doFn;
     this.runtimeContext = runtimeContext;
@@ -150,7 +150,7 @@ public class MultiDoFnFunction<InputT, OutputT>
             windowingStrategy);
 
     DoFnRunnerWithMetrics<InputT, OutputT> doFnRunnerWithMetrics =
-        new DoFnRunnerWithMetrics<>(stepName, doFnRunner, metricsAccum);
+        new DoFnRunnerWithMetrics<>(stepName, doFnRunner, metricsContainer);
 
     return new SparkProcessContext<>(
         doFn, doFnRunnerWithMetrics, outputManager,

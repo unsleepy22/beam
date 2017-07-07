@@ -15,40 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.beam.sdk.metrics;
 
-import java.io.Serializable;
 import org.apache.beam.sdk.annotations.Experimental;
 import org.apache.beam.sdk.annotations.Experimental.Kind;
 
 /**
- * Holds the metrics for a single step and unit-of-commit (bundle).
+ * A metric that reports a single long value and can be incremented or decremented.
  */
 @Experimental(Kind.METRICS)
-public interface MetricsContainer extends Serializable {
+public interface Meter extends Metric {
 
-  /**
-   * Return the {@link Counter} that should be used for implementing the given
-   * {@code metricName} in this container.
-   */
-  Counter getCounter(MetricName metricName);
+    /**
+     * Update the meter by 1.
+     */
+    void mark();
 
-  /**
-   * Return the {@link Distribution} that should be used for implementing the given
-   * {@code metricName} in this container.
-   */
-  Distribution getDistribution(MetricName metricName);
-
-  /**
-   * Return the {@link Gauge} that should be used for implementing the given
-   * {@code metricName} in this container.
-   */
-  Gauge getGauge(MetricName metricName);
-
-  /**
-   * Return the {@link Meter} that should be used for implementing the given
-   * {@code metricName} in this container.
-   */
-  Meter getMeter(MetricName name);
+    /**
+     * Update the meter by the given amount.
+     */
+    void mark(long n);
 }

@@ -140,19 +140,20 @@ public class WithMetricsSupport extends MetricRegistry {
   }
 
   private Function<Map.Entry<String, Metric>, Map<String, Gauge>> beamMetricToGauges() {
-    return new Function<Map.Entry<String, Metric>, Map<String, Gauge>>() {
-      @Override
-      public Map<String, Gauge> apply(final Map.Entry<String, Metric> entry) {
-        final Map<String, ?> metrics = ((SparkBeamMetric) entry.getValue()).renderAll();
-        final String parentName = entry.getKey();
-        final Map<String, Gauge> gaugeMap = Maps.transformEntries(metrics, toGauge());
-        final Map<String, Gauge> fullNameGaugeMap = Maps.newLinkedHashMap();
-        for (Map.Entry<String, Gauge> gaugeEntry : gaugeMap.entrySet()) {
-          fullNameGaugeMap.put(parentName + "." + gaugeEntry.getKey(), gaugeEntry.getValue());
-        }
-        return Maps.filterValues(fullNameGaugeMap, Predicates.notNull());
-      }
-    };
+    return null;
+//    return new Function<Map.Entry<String, Metric>, Map<String, Gauge>>() {
+//      @Override
+//      public Map<String, Gauge> apply(final Map.Entry<String, Metric> entry) {
+//        final Map<String, ?> metrics = ((SparkBeamMetric) entry.getValue()).renderAll();
+//        final String parentName = entry.getKey();
+//        final Map<String, Gauge> gaugeMap = Maps.transformEntries(metrics, toGauge());
+//        final Map<String, Gauge> fullNameGaugeMap = Maps.newLinkedHashMap();
+//        for (Map.Entry<String, Gauge> gaugeEntry : gaugeMap.entrySet()) {
+//          fullNameGaugeMap.put(parentName + "." + gaugeEntry.getKey(), gaugeEntry.getValue());
+//        }
+//        return Maps.filterValues(fullNameGaugeMap, Predicates.notNull());
+//      }
+//    };
   }
 
   private Maps.EntryTransformer<String, Object, Gauge> toGauge() {

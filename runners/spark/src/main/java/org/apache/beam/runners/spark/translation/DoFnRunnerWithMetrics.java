@@ -38,15 +38,15 @@ import org.joda.time.Instant;
 class DoFnRunnerWithMetrics<InputT, OutputT> implements DoFnRunner<InputT, OutputT> {
   private final DoFnRunner<InputT, OutputT> delegate;
   private final String stepName;
-  private final Accumulator<MetricsContainerStepMap> metricsAccum;
+  private final MetricsContainer metricsContainer;
 
   DoFnRunnerWithMetrics(
       String stepName,
       DoFnRunner<InputT, OutputT> delegate,
-      Accumulator<MetricsContainerStepMap> metricsAccum) {
+      MetricsContainer metricsContainer) {
     this.delegate = delegate;
     this.stepName = stepName;
-    this.metricsAccum = metricsAccum;
+    this.metricsContainer = metricsContainer;
   }
 
   @Override
@@ -87,6 +87,6 @@ class DoFnRunnerWithMetrics<InputT, OutputT> implements DoFnRunner<InputT, Outpu
   }
 
   private MetricsContainer metricsContainer() {
-    return metricsAccum.localValue().getContainer(stepName);
+    return metricsContainer;
   }
 }

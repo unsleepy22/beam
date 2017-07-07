@@ -33,30 +33,39 @@ import org.apache.beam.sdk.metrics.DistributionResult;
 @AutoValue
 public abstract class DistributionData implements Serializable {
 
-  public abstract long sum();
-  public abstract long count();
-  public abstract long min();
-  public abstract long max();
+  public abstract double p999();
+  public abstract double p99();
+  public abstract double p95();
+  public abstract double p75();
+  public abstract double min();
+  public abstract double max();
+  public abstract double mean();
+  public abstract double stddev();
 
-  public static final DistributionData EMPTY = create(0, 0, Long.MAX_VALUE, Long.MIN_VALUE);
+  public static final DistributionData EMPTY = create(0,0,0,0,0,0,0,0);
 
-  public static DistributionData create(long sum, long count, long min, long max) {
-    return new AutoValue_DistributionData(sum, count, min, max);
+  public static DistributionData create(double p999, double p99, double p95, double p75,
+                                            double min, double max, double mean, double stddev) {
+    return new AutoValue_DistributionData(p999, p99, p95, p75, min, max, mean, stddev);
   }
 
   public static DistributionData singleton(long value) {
-    return create(value, 1, value, value);
+    return create(value, value, value, value, value, value, value, 0);
   }
 
   public DistributionData combine(DistributionData value) {
     return create(
-        sum() + value.sum(),
-        count() + value.count(),
-        Math.min(value.min(), min()),
-        Math.max(value.max(), max()));
+            (p999() + value.p999()) / 2,
+            (p99() + value.p99()) / 2,
+            (p95() + value.p95()) / 2,
+            (p75() + value.p75()) / 2,
+            Math.min(value.min(), min()),
+            Math.max(value.max(), max()),
+            (mean() + value.mean()) / 2,
+            0);
   }
 
   public DistributionResult extractResult() {
-    return DistributionResult.create(sum(), count(), min(), max());
+    return DistributionResult.create(p999(), p99(), p95(), p75(), min(), max(), mean(), stddev());
   }
 }

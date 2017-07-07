@@ -21,6 +21,7 @@ package org.apache.beam.runners.spark.metrics;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import java.io.IOException;
+import org.apache.beam.runners.core.metrics.MetricsContainerDataMap;
 import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
 import org.apache.beam.runners.spark.SparkPipelineOptions;
 import org.apache.beam.runners.spark.translation.streaming.Checkpoint;
@@ -45,7 +46,7 @@ public class MetricsAccumulator {
   private static final String ACCUMULATOR_NAME = "Beam.Metrics";
   private static final String ACCUMULATOR_CHECKPOINT_FILENAME = "metrics";
 
-  private static volatile Accumulator<MetricsContainerStepMap> instance = null;
+  private static volatile Accumulator<MetricsContainerDataMap> instance = null;
   private static volatile FileSystem fileSystem;
   private static volatile Path checkpointFilePath;
 
@@ -59,13 +60,13 @@ public class MetricsAccumulator {
           Optional<CheckpointDir> maybeCheckpointDir =
               opts.isStreaming() ? Optional.of(new CheckpointDir(opts.getCheckpointDir()))
                   : Optional.<CheckpointDir>absent();
-          Accumulator<MetricsContainerStepMap> accumulator =
+          Accumulator<MetricsContainerDataMap> accumulator =
               jsc.sc().accumulator(
-                  new MetricsContainerStepMap(),
+                  new MetricsContainerDataMap(),
                   ACCUMULATOR_NAME,
                   new MetricsAccumulatorParam());
           if (maybeCheckpointDir.isPresent()) {
-            Optional<MetricsContainerStepMap> maybeRecoveredValue =
+            Optional<MetricsContainerDataMap> maybeRecoveredValue =
                 recoverValueFromCheckpoint(jsc, maybeCheckpointDir.get());
             if (maybeRecoveredValue.isPresent()) {
               accumulator.setValue(maybeRecoveredValue.get());
@@ -78,7 +79,7 @@ public class MetricsAccumulator {
     }
   }
 
-  public static Accumulator<MetricsContainerStepMap> getInstance() {
+  public static Accumulator<MetricsContainerDataMap> getInstance() {
     if (instance == null) {
       throw new IllegalStateException("Metrics accumulator has not been instantiated");
     } else {
@@ -86,14 +87,14 @@ public class MetricsAccumulator {
     }
   }
 
-  private static Optional<MetricsContainerStepMap> recoverValueFromCheckpoint(
+  private static Optional<MetricsContainerDataMap> recoverValueFromCheckpoint(
       JavaSparkContext jsc,
       CheckpointDir checkpointDir) {
     try {
       Path beamCheckpointPath = checkpointDir.getBeamCheckpointDir();
       checkpointFilePath = new Path(beamCheckpointPath, ACCUMULATOR_CHECKPOINT_FILENAME);
       fileSystem = checkpointFilePath.getFileSystem(jsc.hadoopConfiguration());
-      MetricsContainerStepMap recoveredValue =
+      MetricsContainerDataMap recoveredValue =
           Checkpoint.readObject(fileSystem, checkpointFilePath);
       if (recoveredValue != null) {
         LOG.info("Recovered metrics from checkpoint.");

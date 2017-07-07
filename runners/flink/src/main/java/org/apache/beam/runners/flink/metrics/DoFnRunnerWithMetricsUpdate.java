@@ -36,7 +36,7 @@ import org.joda.time.Instant;
 public class DoFnRunnerWithMetricsUpdate<InputT, OutputT> implements DoFnRunner<InputT, OutputT> {
 
   private final String stepName;
-  private final FlinkMetricContainer container;
+  private final FlinkMetricsContainerMap container;
   private final DoFnRunner<InputT, OutputT> delegate;
 
   public DoFnRunnerWithMetricsUpdate(
@@ -45,7 +45,7 @@ public class DoFnRunnerWithMetricsUpdate<InputT, OutputT> implements DoFnRunner<
       RuntimeContext runtimeContext) {
     this.stepName = stepName;
     this.delegate = delegate;
-    container = new FlinkMetricContainer(runtimeContext);
+    container = FlinkMetricsContainerMap.getInstance(runtimeContext);
   }
 
   @Override

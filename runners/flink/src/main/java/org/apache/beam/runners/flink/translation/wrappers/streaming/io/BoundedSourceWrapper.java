@@ -20,7 +20,7 @@ package org.apache.beam.runners.flink.translation.wrappers.streaming.io;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.beam.runners.flink.metrics.FlinkMetricContainer;
+import org.apache.beam.runners.flink.metrics.FlinkMetricsContainerMap;
 import org.apache.beam.runners.flink.metrics.ReaderInvocationUtil;
 import org.apache.beam.runners.flink.translation.utils.SerializedPipelineOptions;
 import org.apache.beam.sdk.io.BoundedSource;
@@ -104,7 +104,7 @@ public class BoundedSourceWrapper<OutputT>
         numSubtasks,
         localSources);
 
-    FlinkMetricContainer metricContainer = new FlinkMetricContainer(getRuntimeContext());
+    FlinkMetricsContainerMap metricContainer = FlinkMetricsContainerMap.getInstance(getRuntimeContext());
 
     ReaderInvocationUtil<OutputT, BoundedSource.BoundedReader<OutputT>> readerInvoker =
         new ReaderInvocationUtil<>(

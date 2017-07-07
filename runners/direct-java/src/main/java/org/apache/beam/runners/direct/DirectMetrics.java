@@ -41,6 +41,8 @@ import org.apache.beam.runners.core.metrics.MetricUpdates.MetricUpdate;
 import org.apache.beam.runners.core.metrics.MetricsMap;
 import org.apache.beam.sdk.metrics.DistributionResult;
 import org.apache.beam.sdk.metrics.GaugeResult;
+import org.apache.beam.sdk.metrics.MeterData;
+import org.apache.beam.sdk.metrics.MeterResult;
 import org.apache.beam.sdk.metrics.MetricName;
 import org.apache.beam.sdk.metrics.MetricQueryResults;
 import org.apache.beam.sdk.metrics.MetricResult;
@@ -224,6 +226,28 @@ class DirectMetrics extends MetricResults {
         }
       };
 
+  private static final MetricAggregation<MeterData, MeterResult> METER =
+      new MetricAggregation<MeterData, MeterResult>() {
+        @Override
+        public MeterData zero() {
+          return new MeterData();
+        }
+
+        @Override
+        public MeterData combine(Iterable<MeterData> updates) {
+          MeterData result = new MeterData();
+          for (MeterData update : updates) {
+            result.merge(update);
+          }
+          return result;
+        }
+
+        @Override
+        public MeterResult extract(MeterData data) {
+          return MeterResult.create(data.getM1(), data.getM5(), data.getM15(), data.getMean());
+        }
+      };
+
   /** The current values of counters in memory. */
   private MetricsMap<MetricKey, DirectMetric<Long, Long>> counters =
       new MetricsMap<>(new MetricsMap.Factory<MetricKey, DirectMetric<Long, Long>>() {
@@ -250,14 +274,24 @@ class DirectMetrics extends MetricResults {
               return new DirectMetric<>(GAUGE);
             }
           });
+  private MetricsMap<MetricKey, DirectMetric<MeterData, MeterResult>> meters =
+      new MetricsMap<>(
+          new MetricsMap.Factory<MetricKey, DirectMetric<MeterData, MeterResult>>() {
+            @Override
+            public DirectMetric<MeterData, MeterResult> createInstance(
+                MetricKey unusedKey) {
+              return new DirectMetric<>(METER);
+            }
+          });
 
   @AutoValue
   abstract static class DirectMetricQueryResults implements MetricQueryResults {
     public static MetricQueryResults create(
         Iterable<MetricResult<Long>> counters,
         Iterable<MetricResult<DistributionResult>> distributions,
-        Iterable<MetricResult<GaugeResult>> gauges) {
-      return new AutoValue_DirectMetrics_DirectMetricQueryResults(counters, distributions, gauges);
+        Iterable<MetricResult<GaugeResult>> gauges,
+        Iterable<MetricResult<MeterResult>> meters) {
+      return new AutoValue_DirectMetrics_DirectMetricQueryResults(counters, distributions, gauges, meters);
     }
   }
 
@@ -295,9 +329,15 @@ class DirectMetrics extends MetricResults {
         : gauges.entries()) {
       maybeExtractResult(filter, gaugeResults, gauge);
     }
+    ImmutableList.Builder<MetricResult<MeterResult>> meterResults =
+        ImmutableList.builder();
+    for (Entry<MetricKey, DirectMetric<MeterData, MeterResult>> meter
+        : meters.entries()) {
+      maybeExtractResult(filter, meterResults, meter);
+    }
 
     return DirectMetricQueryResults.create(counterResults.build(), distributionResults.build(),
-        gaugeResults.build());
+        gaugeResults.build(), meterResults.build());
   }
 
   private <ResultT> void maybeExtractResult(

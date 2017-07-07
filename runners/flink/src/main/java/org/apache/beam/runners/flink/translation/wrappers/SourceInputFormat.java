@@ -19,7 +19,7 @@ package org.apache.beam.runners.flink.translation.wrappers;
 
 import java.io.IOException;
 import java.util.List;
-import org.apache.beam.runners.flink.metrics.FlinkMetricContainer;
+import org.apache.beam.runners.flink.metrics.FlinkMetricsContainerMap;
 import org.apache.beam.runners.flink.metrics.ReaderInvocationUtil;
 import org.apache.beam.runners.flink.translation.utils.SerializedPipelineOptions;
 import org.apache.beam.sdk.io.BoundedSource;
@@ -71,7 +71,7 @@ public class SourceInputFormat<T>
 
   @Override
   public void open(SourceInputSplit<T> sourceInputSplit) throws IOException {
-    FlinkMetricContainer metricContainer = new FlinkMetricContainer(getRuntimeContext());
+    FlinkMetricsContainerMap metricContainer = FlinkMetricsContainerMap.getInstance(getRuntimeContext());
 
     readerInvoker =
         new ReaderInvocationUtil<>(

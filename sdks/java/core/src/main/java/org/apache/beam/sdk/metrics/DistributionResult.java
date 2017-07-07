@@ -28,18 +28,19 @@ import org.apache.beam.sdk.annotations.Experimental.Kind;
 @AutoValue
 public abstract class DistributionResult {
 
-  public abstract long sum();
-  public abstract long count();
-  public abstract long min();
-  public abstract long max();
+  public abstract double p999();
+  public abstract double p99();
+  public abstract double p95();
+  public abstract double p75();
+  public abstract double min();
+  public abstract double max();
+  public abstract double mean();
+  public abstract double stddev();
 
-  public double mean() {
-    return (1.0 * sum()) / count();
-  }
+  public static final DistributionResult ZERO = create(0, 0, 0, 0, 0, 0, 0, 0);
 
-  public static final DistributionResult ZERO = create(0, 0, Long.MAX_VALUE, Long.MIN_VALUE);
-
-  public static DistributionResult create(long sum, long count, long min, long max) {
-    return new AutoValue_DistributionResult(sum, count, min, max);
+  public static DistributionResult create(double p999, double p99, double p95, double p75,
+                                          double min, double max, double mean, double stddev) {
+    return new AutoValue_DistributionResult(p999, p99, p95, p75, min, max, mean, stddev);
   }
 }

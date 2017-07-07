@@ -16,25 +16,19 @@
  * limitations under the License.
  */
 
-package org.apache.beam.runners.spark.metrics;
-
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricRegistry;
-import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
-
+package org.apache.beam.runners.flink.metrics;
 
 /**
- * An adapter between the {@link MetricsContainerStepMap} and Codahale's {@link Metric} interface.
+ * Global configurations of flink beam metrics.
  */
-class SparkBeamMetric {
+public class FlinkBeamMetric {
+    private static volatile boolean enableMetricsAccumulator = false;
 
-    private static final MetricRegistry metricRegistry = new MetricRegistry();
-
-    private SparkBeamMetric(){
+    public static void setEnableMetricsAccumulator(boolean enableMetricsAccumulator) {
+        FlinkBeamMetric.enableMetricsAccumulator = enableMetricsAccumulator;
     }
 
-    public static MetricRegistry getMetricRegistry() {
-        return metricRegistry;
+    public static boolean isEnableMetricsAccumulator() {
+        return enableMetricsAccumulator;
     }
-
 }

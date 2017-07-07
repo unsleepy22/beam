@@ -31,18 +31,18 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import org.apache.beam.runners.core.SystemReduceFn;
-import org.apache.beam.runners.core.metrics.MetricsContainerStepMap;
 import org.apache.beam.runners.spark.aggregators.AggregatorsAccumulator;
 import org.apache.beam.runners.spark.aggregators.NamedAggregators;
 import org.apache.beam.runners.spark.coders.CoderHelpers;
 import org.apache.beam.runners.spark.io.SourceRDD;
-import org.apache.beam.runners.spark.metrics.MetricsAccumulator;
+import org.apache.beam.runners.spark.metrics.SparkMetricsContainerImpl;
 import org.apache.beam.runners.spark.util.SideInputBroadcast;
 import org.apache.beam.sdk.coders.CannotProvideCoderException;
 import org.apache.beam.sdk.coders.Coder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.coders.StringUtf8Coder;
 import org.apache.beam.sdk.io.Read;
+import org.apache.beam.sdk.metrics.MetricsContainer;
 import org.apache.beam.sdk.transforms.Combine;
 import org.apache.beam.sdk.transforms.CombineWithContext;
 import org.apache.beam.sdk.transforms.Create;
@@ -361,7 +361,7 @@ public final class TransformTranslator {
         WindowingStrategy<?, ?> windowingStrategy =
             context.getInput(transform).getWindowingStrategy();
         Accumulator<NamedAggregators> aggAccum = AggregatorsAccumulator.getInstance();
-        Accumulator<MetricsContainerStepMap> metricsAccum = MetricsAccumulator.getInstance();
+        MetricsContainer metricsContainer = new SparkMetricsContainerImpl(stepName);
 
         JavaPairRDD<TupleTag<?>, WindowedValue<?>> all;
 
@@ -371,7 +371,7 @@ public final class TransformTranslator {
 
         MultiDoFnFunction<InputT, OutputT> multiDoFnFunction = new MultiDoFnFunction<>(
             aggAccum,
-            metricsAccum,
+            metricsContainer,
             stepName,
             doFn,
             context.getRuntimeContext(),
